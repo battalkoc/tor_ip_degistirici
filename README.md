@@ -3,7 +3,9 @@
 Çalıştırmadan önce yapılması gerekenler;
 
 apt-get install tor
+
 service tor start
+
 service tor status
 
 
