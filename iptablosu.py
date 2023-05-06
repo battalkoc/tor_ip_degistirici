@@ -1,5 +1,6 @@
 from subprocess import call, check_call, CalledProcessError, getoutput
-from os import devnull,system
+from os import devnull
+from os.path import isfile, basename
 from sys import exit, stdout, stderr
 from atexit import register
 from json import load
@@ -20,6 +21,14 @@ class Tor_ip_tablosu:
     self.tor_id = getoutput("id -ur debian-tor")
     self.trans_port = "9040"
     self.tor_config_dosyasi = '/etc/tor/torrc'
+    self.torrc = r'''
+    ## Inserted by %s for tor iptables rules set
+    ## Transparently route all traffic thru tor on port %s
+    VirtualAddrNetwork %s
+    AutomapHostsOnResolve 1
+    TransPort %s
+    DNSPort %s
+    ''' % (basename(__file__), self.trans_port, self.virtual_net, self.trans_port, self.local_dnsport)
 
 
   def ip_degistirici(self):
@@ -32,7 +41,10 @@ class Tor_ip_tablosu:
       bknull = open(devnull, 'w')
       try:
         tor_restart = check_call(["service", "tor", "restart"], stdout=bknull, stderr=bknull)
-
+        if isfile(self.tor_config_dosyasi):
+            if not 'VirtualAddrNetwork' in open(self.tor_config_dosyasi).read():
+                with open(self.tor_config_dosyasi, 'a+') as torrconf:
+                    torrconf.write(self.torrc)
         if tor_restart == 0:
           print(" {0}".format("[\033[5;92m+\033[0m] Gizlilik Durumu [\033[5;92mACIK\033[0m]"))
           self.ip_bilgisi()
@@ -80,6 +92,3 @@ class Tor_ip_tablosu:
 
 tor_ip = Tor_ip_tablosu()
 tor_ip.ip_degistirici()
-
-
-
